@@ -1,11 +1,14 @@
 import { createResolver } from '@nuxt/kit';
+import { defineNuxtConfig } from 'nuxt/config';
+
 const { resolve } = createResolver(import.meta.url);
 
+// Environment variables with fallbacks
+const GQL_HOST = process.env.GQL_HOST || 'http://localhost:4000/graphql';
+const APP_HOST = process.env.APP_HOST || 'http://localhost:3000';
+
 export default defineNuxtConfig({
-  compatibilityDate: '2025-03-30',
-  future: {
-    compatibilityVersion: 4,
-  },
+  compatibilityDate: '2025-08-10',
 
   app: {
     head: {
@@ -15,28 +18,18 @@ export default defineNuxtConfig({
     pageTransition: { name: 'page', mode: 'default' },
   },
 
-  experimental: {
-    sharedPrerenderData: true,
-    buildCache: true,
-    defaults: {
-      nuxtLink: {
-        prefetch: true,
-      },
-    },
-  },
-
   plugins: [resolve('./app/plugins/init.ts')],
 
   components: [{ path: resolve('./app/components'), pathPrefix: false }],
 
-  modules: ['woonuxt-settings', 'nuxt-graphql-client', '@nuxtjs/tailwindcss', '@nuxt/icon', '@nuxt/image', '@nuxtjs/i18n'],
+  modules: [resolve('./modules/woonuxt-bridge.ts'), 'nuxt-graphql-client', '@nuxtjs/tailwindcss', '@nuxt/icon', '@nuxt/image', '@nuxtjs/i18n'],
 
   'graphql-client': {
     clients: {
       default: {
-        host: process.env.GQL_HOST || 'http://localhost:4000/graphql',
+        host: GQL_HOST,
         corsOptions: { mode: 'cors', credentials: 'include' },
-        headers: { Origin: process.env.APP_HOST || 'http://localhost:3000' },
+        headers: { Origin: APP_HOST },
       },
     },
   },
@@ -62,8 +55,8 @@ export default defineNuxtConfig({
 
   nitro: {
     routeRules: {
-      '/checkout/order-received/**': { ssr: false },
-      '/order-summary/**': { ssr: false },
+      '/checkout/order-received/**': { prerender: false },
+      '/order-summary/**': { prerender: false },
     },
   },
 
