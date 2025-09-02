@@ -88,6 +88,28 @@ And here is the live demo of the customized WooNuxt site: [My Shop](https://mysh
 
 `GQL_HOST` - The URL of your WordPress site. This is the only required environment variable. The WooNuxt Settings plugin will automatically populate the rest of the environment variables for you.
 
+
+### WCFM Marketplace Setup
+
+1. Install the [WCFM Marketplace](https://wordpress.org/plugins/wc-multivendor-marketplace/) and [WCFM – REST API](https://wordpress.org/plugins/wc-frontend-manager-rest-api/) plugins on your WordPress site.
+2. Generate REST API keys in **WooCommerce → Settings → Advanced → REST API** or enable JWT authentication to authorize requests.
+3. If available, install and activate the WPGraphQL extension for WCFM to expose vendor data to GraphQL.
+
+Add the credentials to your Nuxt `runtimeConfig`:
+
+```ts
+// nuxt.config.ts
+export default defineNuxtConfig({
+  runtimeConfig: {
+    wcfmConsumerKey: process.env.WCFM_CONSUMER_KEY,
+    wcfmConsumerSecret: process.env.WCFM_CONSUMER_SECRET,
+    public: {
+      wcfmApiBase: process.env.WCFM_API_BASE || 'https://wp.example.com/wp-json/wcfmmp/v1'
+    }
+  }
+})
+```
+
 &nbsp;
 
 #### Tested up to:
