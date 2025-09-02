@@ -5,46 +5,35 @@ const { products } = useProducts();
 
 // TODO: Refactor all this logic. It's a mess.
 const currentQuery = computed(() => {
-  const query = route.query;
-  const queryKeys = Object.keys(query);
-  let currentQuery = '';
-  if (queryKeys.length > 0) {
-    queryKeys.forEach((key, index) => {
-      currentQuery += index === 0 ? `${key}=${query[key]}` : `&${key}=${query[key]}`;
-    });
-  }
-  return decodeURIComponent(currentQuery);
+  const params = new URLSearchParams();
+  Object.entries(route.query).forEach(([key, value]) => {
+    if (Array.isArray(value)) {
+      value.forEach((v) => params.append(key, v));
+    } else if (value != null) {
+      params.append(key, String(value));
+    }
+  });
+  return params.toString();
 });
 
 const page = ref(route.params.pageNumber ? parseInt(route.params.pageNumber as string) : 1);
 const numberOfPages = computed<number>(() => Math.ceil(products.value.length / productsPerPage || 1));
 
 const prevSrc = (pageNumber: number) => {
-  if (currentQuery.value === '') {
-    return decodeURIComponent(`/products/page/${pageNumber > 1 ? pageNumber - 1 : pageNumber}`);
-  } else {
-    return decodeURIComponent(
-      pageNumber > 1 ? `/products/page/${pageNumber - 1}/?${currentQuery.value}` : `/products/page/${pageNumber}/?${currentQuery.value}`,
-    );
-  }
+  const target = pageNumber > 1 ? pageNumber - 1 : pageNumber;
+  const query = currentQuery.value ? `/?${currentQuery.value}` : '';
+  return `/products/page/${target}${query}`;
 };
 
 const nextSrc = (pageNumber: number) => {
-  if (currentQuery.value === '') {
-    return decodeURIComponent(`/products/page/${pageNumber < numberOfPages.value ? pageNumber + 1 : pageNumber}`);
-  } else {
-    return decodeURIComponent(
-      pageNumber < numberOfPages.value ? `/products/page/${pageNumber + 1}/?${currentQuery.value}` : `/products/page/${pageNumber}/?${currentQuery.value}`,
-    );
-  }
+  const target = pageNumber < numberOfPages.value ? pageNumber + 1 : pageNumber;
+  const query = currentQuery.value ? `/?${currentQuery.value}` : '';
+  return `/products/page/${target}${query}`;
 };
 
 const numberSrc = (pageNumber: number) => {
-  if (currentQuery.value === '') {
-    return decodeURIComponent(`/products/page/${pageNumber}`);
-  } else {
-    return decodeURIComponent(`/products/page/${pageNumber}/?${currentQuery.value}`);
-  }
+  const query = currentQuery.value ? `/?${currentQuery.value}` : '';
+  return `/products/page/${pageNumber}${query}`;
 };
 </script>
 
