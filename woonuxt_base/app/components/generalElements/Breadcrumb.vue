@@ -1,16 +1,13 @@
 <script setup lang="ts">
-const runtimeConfig = useRuntimeConfig();
-
 const { product } = defineProps<{ product: Product }>();
 
-// TODO fetch perma link from WP API
-const productCategoryPermallink = runtimeConfig?.public?.PRODUCT_CATEGORY_PERMALINK || '/product-category/';
+const productCategoryPermalink = await useProductCategoryBase();
 const primaryCategory = computed(() => product.productCategories?.nodes[0]);
 const format = computed(() => [
   { name: 'Products', slug: '/products' },
   {
     name: primaryCategory.value?.name,
-    slug: `${String(productCategoryPermallink)}${primaryCategory.value?.slug}`,
+    slug: `${String(productCategoryPermalink.value)}${primaryCategory.value?.slug}`,
   },
   { name: product.name },
 ]);
