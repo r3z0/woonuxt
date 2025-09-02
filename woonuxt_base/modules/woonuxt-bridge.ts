@@ -64,7 +64,7 @@ export default defineNuxtModule({
     try {
       const { data } = await $fetch(GQL_HOST, {
         method: 'POST',
-        body: JSON.stringify({ query: getVersionQuery }),
+        body: { query: getVersionQuery },
         headers: { Origin: process.env.APP_HOST || 'http://localhost:3000' },
       });
 
@@ -117,7 +117,7 @@ export default defineNuxtModule({
     try {
       const { data } = await $fetch(GQL_HOST, {
         method: 'POST',
-        body: JSON.stringify({ query }),
+        body: { query },
         headers: { Origin: process.env.APP_HOST || 'http://localhost:3000' },
       });
 
