@@ -11,10 +11,7 @@ export default defineNuxtPlugin(async (nuxtApp) => {
 
     async function initStore() {
       if (initialised) {
-        // We only want to execute this code block once, so we return if initialised is truthy and remove the event listeners
-        eventsToFireOn.forEach((event) => {
-          window.removeEventListener(event, initStore);
-        });
+        // We only want to execute this code block once
         return;
       }
 
@@ -40,15 +37,15 @@ export default defineNuxtPlugin(async (nuxtApp) => {
         const reloadCount = useCookie('reloadCount');
         if (!reloadCount.value) {
           reloadCount.value = '1';
+
+          // Log out the user
+          const { logoutUser } = useAuth();
+          await logoutUser();
+
+          window.location.reload();
         } else {
           return;
         }
-
-        // Log out the user
-        const { logoutUser } = useAuth();
-        await logoutUser();
-
-        if (!reloadCount.value) window.location.reload();
       }
     }
 
