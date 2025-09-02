@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  app:
+    image: node:20-alpine
+    working_dir: /app
+    volumes:
+      - .:/app
+    command: npm run dev
+    ports:
+      - "3000:3000"
+    networks:
+      mozaikbzh_app-network:
+        ipv4_address: 172.20.0.20
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=development
+
+networks:
+  mozaikbzh_app-network:
+    external: true
