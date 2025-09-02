@@ -10,6 +10,10 @@ interface Vendor extends Customer {
 
 export const useVendors = () => {
   const runtimeConfig = useRuntimeConfig();
+  const getHeaders = () => {
+    const token = useCookie('wcRestToken').value;
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  };
 
   const normalizeVendor = (vendor: any): Vendor => ({
     id: vendor?.id ?? vendor?.vendor_id,
@@ -28,7 +32,9 @@ export const useVendors = () => {
   });
 
   async function getVendors(): Promise<Vendor[]> {
-    const { data, error } = await useAsyncData('vendors', () => $fetch<any[]>(`${runtimeConfig.public?.BACKEND_URL}/wp-json/wcfmmp/v1/vendors`));
+    const { data, error } = await useAsyncData('vendors', () =>
+      $fetch<any[]>(`${runtimeConfig.public?.BACKEND_URL}/wp-json/wcfmmp/v1/vendors`, { headers: getHeaders() }),
+    );
 
     if (error.value) {
       console.error(error.value);
@@ -39,7 +45,9 @@ export const useVendors = () => {
   }
 
   async function getVendor(id: number | string): Promise<Vendor | null> {
-    const { data, error } = await useAsyncData(`vendor-${id}`, () => $fetch<any>(`${runtimeConfig.public?.BACKEND_URL}/wp-json/wcfmmp/v1/vendors/${id}`));
+    const { data, error } = await useAsyncData(`vendor-${id}`, () =>
+      $fetch<any>(`${runtimeConfig.public?.BACKEND_URL}/wp-json/wcfmmp/v1/vendors/${id}`, { headers: getHeaders() }),
+    );
 
     if (error.value) {
       console.error(error.value);

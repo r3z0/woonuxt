@@ -6,11 +6,13 @@ import type {
   ResetPasswordEmailMutationVariables,
   ResetPasswordKeyMutationVariables,
 } from '#gql';
+import { $fetch } from 'ofetch';
 
 export const useAuth = () => {
   const { refreshCart } = useCart();
   const { clearAllCookies, getErrorMessage } = useHelpers();
   const router = useRouter();
+  const runtimeConfig = useRuntimeConfig();
 
   const customer = useState<Customer>('customer', () => ({ billing: {}, shipping: {} }));
   const viewer = useState<Viewer | null>('viewer', () => null);
@@ -18,6 +20,55 @@ export const useAuth = () => {
   const orders = useState<Order[] | null>('orders', () => null);
   const downloads = useState<DownloadableItem[] | null>('downloads', () => null);
   const loginClients = useState<LoginClient[] | null>('loginClients', () => null);
+
+  const storeWcToken = async (username?: string, password?: string, token?: string) => {
+    try {
+      const headers: Record<string, string> = {};
+      const body: any = {};
+      if (username && password) {
+        body.username = username;
+        body.password = password;
+      }
+      if (token) headers.Authorization = `Bearer ${token}`;
+      const response = await $fetch<{ token: string }>(
+        `${runtimeConfig.public?.BACKEND_URL}/wp-json/jwt-auth/v1/token`,
+        { method: 'POST', body: Object.keys(body).length ? body : undefined, headers }
+      );
+      const wcToken = useCookie('wcRestToken');
+      wcToken.value = response.token;
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const clearWcToken = async () => {
+    const wcToken = useCookie('wcRestToken');
+    if (!wcToken.value) return;
+    try {
+      await $fetch(`${runtimeConfig.public?.BACKEND_URL}/wp-json/jwt-auth/v1/token/revoke`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${wcToken.value}` },
+      });
+    } catch (err) {
+      console.error(err);
+    }
+    wcToken.value = null;
+  };
+
+  const refreshWcToken = async () => {
+    const wcToken = useCookie('wcRestToken');
+    if (!wcToken.value) return;
+    try {
+      const response = await $fetch<{ token: string }>(
+        `${runtimeConfig.public?.BACKEND_URL}/wp-json/jwt-auth/v1/token/refresh`,
+        { method: 'POST', headers: { Authorization: `Bearer ${wcToken.value}` } },
+      );
+      wcToken.value = response.token;
+    } catch (err) {
+      console.error(err);
+      await clearWcToken();
+    }
+  };
 
   // Log in the user
   const loginUser = async (credentials: CreateAccountInput): Promise<AuthResponse> => {
@@ -27,6 +78,9 @@ export const useAuth = () => {
       const { login } = await GqlLogin(credentials);
       if (login?.user && login?.authToken) {
         useGqlToken(login.authToken);
+        const username = (credentials as any)?.username;
+        const password = (credentials as any)?.password;
+        await storeWcToken(username, password, login.authToken);
         await refreshCart();
       }
 
@@ -53,6 +107,7 @@ export const useAuth = () => {
       const response = await GqlLoginWithProvider({ input });
       if (response.login?.authToken) {
         useGqlToken(response.login.authToken);
+        await storeWcToken(undefined, undefined, response.login.authToken);
         await refreshCart();
         if (viewer.value === null) {
           return {
@@ -85,6 +140,7 @@ export const useAuth = () => {
       const { logout } = await GqlLogout();
       if (logout) {
         await refreshCart();
+        await clearWcToken();
         clearAllCookies();
         customer.value = { billing: {}, shipping: {} };
       }
@@ -221,5 +277,6 @@ export const useAuth = () => {
     getOrders,
     getDownloads,
     updateLoginClients,
+    refreshWcToken,
   };
 };
